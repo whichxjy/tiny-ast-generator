@@ -1,14 +1,37 @@
-{ Sample program
-  in TINY language -
-  computes factorial
+{
+  Sample program
+  in TINY language
 }
-read x; { input an integer }
-fact := 1;
-if 0 < x then { don't compute if x <= 0 }
-  fact := 1;
-  repeat
-    fact := fact * x;
-    x := x - 1
-  until x = 0;
-  write fact { output factorial of x }
+
+proc print123 begin
+    k := 123;
+    write k;
 end
+
+read x; { input an integer }
+
+fact := 1;
+
+if 0 < x then { don't compute if x <= 0 }
+    fact := 1;
+
+    repeat
+        fact := fact * x;
+        x := x - 1;
+    until x = 0;
+
+    write fact; { output factorial of x }
+end;
+
+{ --------------------------------------- }
+
+i := 0;
+
+repeat
+    if 55.5 < i then
+        call print123;
+        break;
+    else
+        i := (i + 2.4) * 3;
+    end;
+until i < 70.5;
