@@ -119,11 +119,12 @@ void print_token(TokenType token_type, const char *lexeme) {
     }
 }
 
-// the number of indent spaces
-static int indent_space_num = 0;
-
 // indent spaces
 #define INDENT_SPACES 4
+
+// the number of indent spaces
+static int indent_space_num = -INDENT_SPACES;
+
 // increase indentation
 #define INC_INDENT indent_space_num += INDENT_SPACES
 // decrease indentation
