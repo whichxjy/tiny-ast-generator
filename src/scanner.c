@@ -8,7 +8,8 @@ typedef enum {
     IN_COMMENT,
     IN_ASSIGN,
     IN_ID,
-    IN_NUMBER,
+    IN_INTEGER,
+    IN_FLOAT,
     DONE
 } StateType;
 
@@ -64,14 +65,19 @@ typedef struct {
 
 // reserved words
 ReservedWord reserved_words[RESERVED_WORD_NUM] = {
+    { "read", READ_TOKEN },
+    { "write", WRITE_TOKEN },
     { "if", IF_TOKEN },
     { "then", THEN_TOKEN },
     { "else", ELSE_TOKEN },
     { "end", END_TOKEN },
     { "repeat", REPEAT_TOKEN },
     { "until", UNTIL_TOKEN },
-    { "read", READ_TOKEN },
-    { "write", WRITE_TOKEN }
+    { "break", BREAK_TOKEN },
+    { "continue", CONTINUE_TOKEN },
+    { "proc", PROC_TOKEN },
+    { "begin", BEGIN_TOKEN },
+    { "call", CALL_TOKEN }
 };
 
 // check if it's a reserved word
@@ -116,7 +122,7 @@ TokenType get_next_token(void) {
                     current_dfa_state = IN_ID;
                 }
                 else if (isdigit(current_char)) {
-                    current_dfa_state = IN_NUMBER;
+                    current_dfa_state = IN_INTEGER;
                 }
                 else {
                     current_dfa_state = DONE;
@@ -194,11 +200,23 @@ TokenType get_next_token(void) {
                     current_dfa_state = DONE;
                 }
                 break;
-            // ============= [In Number] =============
-            case IN_NUMBER:
+            // ============= [In Integer] =============
+            case IN_INTEGER:
+                if (current_char == '.') {
+                    current_dfa_state = IN_FLOAT;
+                }
+                else if (!isdigit(current_char)) {
+                    // finish scanning number
+                    current_token = INTEGER_TOKEN;
+                    cancel_current_char();
+                    save_current_char = FALSE;
+                    current_dfa_state = DONE;
+                }
+            // ============= [In Float] =============
+            case IN_FLOAT:
                 if (!isdigit(current_char)) {
                     // finish scanning number
-                    current_token = NUMBER_TOKEN;
+                    current_token = FLOAT_TOKEN;
                     cancel_current_char();
                     save_current_char = FALSE;
                     current_dfa_state = DONE;
