@@ -1,6 +1,18 @@
 #include "tree.h"
 #include <stdlib.h>
 
+// create a procedure definition node
+TreeNode* new_proc_node() {
+    TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
+    for (int i = 0; i < MAX_CHILDREN; i++) {
+        t->child[i] = NULL;
+    }
+    t->sibling = NULL;
+    t->node_type = PROC_NODE;
+    t->line_idx = line_idx;
+    return t;
+}
+
 // create a statement node
 TreeNode* new_stmt_node(StmtType stmt_type) {
     TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));

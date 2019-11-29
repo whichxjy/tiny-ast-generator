@@ -3,6 +3,8 @@
 
 #include "global.h"
 
+// create a procedure definition node
+TreeNode* new_proc_node();
 // create a statement node
 TreeNode* new_stmt_node(StmtType stmt_type);
 // create an expression node
