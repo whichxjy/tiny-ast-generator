@@ -56,14 +56,19 @@ void free_tree(TreeNode *t) {
 // print a token
 void print_token(TokenType token_type, const char *lexeme) {
     switch (token_type) {
+        case READ_TOKEN:
+        case WRITE_TOKEN:
         case IF_TOKEN:
         case THEN_TOKEN:
         case ELSE_TOKEN:
         case END_TOKEN:
         case REPEAT_TOKEN:
         case UNTIL_TOKEN:
-        case READ_TOKEN:
-        case WRITE_TOKEN:
+        case BREAK_TOKEN:
+        case CONTINUE_TOKEN:
+        case PROC_TOKEN:
+        case BEGIN_TOKEN:
+        case CALL_TOKEN:
             fprintf(result_file, "Reserved Word: %s\n", lexeme);
             break;
         case ASSIGN_TOKEN:
@@ -99,8 +104,11 @@ void print_token(TokenType token_type, const char *lexeme) {
         case ID_TOKEN:
             fprintf(result_file, "ID: %s\n", lexeme);
             break;
-        case NUMBER_TOKEN:
-            fprintf(result_file, "Number: %s\n", lexeme);
+        case INTEGER_TOKEN:
+            fprintf(result_file, "Integer: %s\n", lexeme);
+            break;
+        case FLOAT_TOKEN:
+            fprintf(result_file, "Float: %s\n", lexeme);
             break;
         case ERROR_TOKEN:
             fprintf(result_file, "Error: %s\n", lexeme);
@@ -133,23 +141,35 @@ void print_tree(TreeNode *t) {
     INC_INDENT;
     while (t != NULL) {
         print_spaces();
-        if (t->node_type == STMT_NODE) {
+        if (t->node_type == PROC_NODE) {
+            fprintf(result_file, "Function Definition\n");
+        }
+        else if (t->node_type == STMT_NODE) {
             // print statement node
             switch (t->type.stmt_type) {
+                case READ_STMT:
+                    fprintf(result_file, "Read: %s\n", t->attr.name);
+                    break;
+                case WRITE_STMT:
+                    fprintf(result_file, "Write\n");
+                    break;
                 case IF_STMT:
                     fprintf(result_file, "If\n");
                     break;
                 case REPEAT_STMT:
                     fprintf(result_file, "Repeat\n");
                     break;
+                case BREAK_STMT:
+                    fprintf(result_file, "Break\n");
+                    break;
+                case CONTINUE_STMT:
+                    fprintf(result_file, "Continue\n");
+                    break;
                 case ASSIGN_STMT:
                     fprintf(result_file, "Assign to: %s\n", t->attr.name);
                     break;
-                case READ_STMT:
-                    fprintf(result_file, "Read: %s\n", t->attr.name);
-                    break;
-                case WRITE_STMT:
-                    fprintf(result_file, "Write\n");
+                case PROC_CALL_STMT:
+                    fprintf(result_file, "Call Procedure: %s\n", t->attr.name);
                     break;
                 default:
                     fprintf(result_file, "Unknown Statement Type\n");
@@ -162,8 +182,11 @@ void print_tree(TreeNode *t) {
                 case ID_EXPR:
                     fprintf(result_file, "ID: %s\n", t->attr.name);
                     break;
-                case CONST_EXPR:
-                    fprintf(result_file, "Const: %d\n", t->attr.val);
+                case INTEGER_EXPR:
+                    fprintf(result_file, "Integer: %d\n", t->attr.integer_val);
+                    break;
+                case FLOAT_EXPR:
+                    fprintf(result_file, "Float: %f\n", t->attr.float_val);
                     break;
                 case OP_EXPR:
                     fprintf(result_file, "Op: ");
