@@ -8,13 +8,18 @@
 static TokenType current_token;
 
 // functions
+static TreeNode* program(void);
+static TreeNode* proc_def(void);
 static TreeNode* stmts(void);
 static TreeNode* stmt(void);
-static TreeNode* if_stmt(void);
-static TreeNode* repeat_stmt(void);
-static TreeNode* assign_stmt(void);
 static TreeNode* read_stmt(void);
 static TreeNode* write_stmt(void);
+static TreeNode* if_stmt(void);
+static TreeNode* repeat_stmt(void);
+static TreeNode* break_stmt(void);
+static TreeNode* continue_stmt(void);
+static TreeNode* assign_stmt(void);
+static TreeNode* proc_call_stmt(void);
 static TreeNode* expr(void);
 static TreeNode* simple_expr(void);
 static TreeNode* term(void);
@@ -48,26 +53,74 @@ static void match(TokenType expected) {
     }
 }
 
-// statements
-TreeNode* stmts(void) {
+// main program
+TreeNode* program(void) {
     CHECK_SYNTAX_ERROR
-    // match one statement first
-    TreeNode *t = stmt();
-    TreeNode *p = t;
-    while (!SYNTAX_ERROR && current_token != ENDFILE_TOKEN && current_token != END_TOKEN
-           && current_token != ELSE_TOKEN && current_token != UNTIL_TOKEN) {
-        match(SEMI_TOKEN);
-        TreeNode *q = stmt();
+    // match proc-defs
+    TreeNode *t = NULL;
+    TreeNode *p = NULL;
+    while (!SYNTAX_ERROR && current_token != ENDFILE_TOKEN
+           && current_token == PROC_TOKEN) {
+        TreeNode *q = proc_def();
         if (q != NULL) {
             if (t == NULL) {
-                p = q;
-                t = p;
+                t = q;
+                p = t;
             }
             else {
                 p->sibling = q;
                 p = q;
             }
         }
+    }
+    // match stmts
+    p->sibling = stmts();
+    return t;
+}
+
+TreeNode* proc_def(void) {
+    CHECK_SYNTAX_ERROR
+    TreeNode *t = new_proc_node();
+    if (t != NULL) {
+        // match "proc"
+        match(PROC_TOKEN);
+        // match procedure name
+        TreeNode *p = new_expr_node(ID_EXPR);
+        if (p != NULL && current_token == ID_TOKEN) {
+            p->attr.name = copy_string(lexeme);
+        }
+        t->child[0] = p;
+        match(ID_TOKEN);
+        // match "begin"
+        match(BEGIN_TOKEN);
+        // match stmts
+        t->child[1] = stmts();
+        // match "end"
+        match(END_TOKEN);
+    }
+    return t;
+}
+
+// statements
+TreeNode* stmts(void) {
+    CHECK_SYNTAX_ERROR
+    // match one statement first
+    TreeNode *t = NULL;
+    TreeNode *p = NULL;
+    while (!SYNTAX_ERROR && current_token != ENDFILE_TOKEN && current_token != END_TOKEN
+           && current_token != ELSE_TOKEN && current_token != UNTIL_TOKEN) {
+        TreeNode *q = stmt();
+        if (q != NULL) {
+            if (t == NULL) {
+                t = q;
+                p = t;
+            }
+            else {
+                p->sibling = q;
+                p = q;
+            }
+        }
+        match(SEMI_TOKEN);
     }
     return t;
 }
@@ -77,20 +130,29 @@ TreeNode* stmt(void) {
     CHECK_SYNTAX_ERROR
     TreeNode *t = NULL;
     switch (current_token) {
+        case READ_TOKEN:
+            t = read_stmt();
+            break;
+        case WRITE_TOKEN:
+            t = write_stmt();
+            break;
         case IF_TOKEN:
             t = if_stmt();
             break;
         case REPEAT_TOKEN:
             t = repeat_stmt();
             break;
+        case BREAK_TOKEN:
+            t = break_stmt();
+            break;
+        case CONTINUE_TOKEN:
+            t = continue_stmt();
+            break;
         case ID_TOKEN:
             t = assign_stmt();
             break;
-        case READ_TOKEN:
-            t = read_stmt();
-            break;
-        case WRITE_TOKEN:
-            t = write_stmt();
+        case CALL_TOKEN:
+            t = proc_call_stmt();
             break;
         default:
             // syntax error
@@ -98,6 +160,29 @@ TreeNode* stmt(void) {
             print_token(current_token, lexeme);
             current_token = get_next_token();
             break;
+    }
+    return t;
+}
+
+// read statement
+TreeNode* read_stmt(void) {
+    CHECK_SYNTAX_ERROR
+    TreeNode *t = new_stmt_node(READ_STMT);
+    match(READ_TOKEN);
+    if (t != NULL && current_token == ID_TOKEN) {
+        t->attr.name = copy_string(lexeme);
+    }
+    match(ID_TOKEN);
+    return t;
+}
+
+// write statement
+TreeNode* write_stmt(void) {
+    CHECK_SYNTAX_ERROR
+    TreeNode *t = new_stmt_node(WRITE_STMT);
+    match(WRITE_TOKEN);
+    if (t != NULL) {
+        t->child[0] = expr();
     }
     return t;
 }
@@ -139,6 +224,26 @@ TreeNode* repeat_stmt(void) {
     return t;
 }
 
+// break statement
+TreeNode* break_stmt(void) {
+    CHECK_SYNTAX_ERROR
+    TreeNode *t = new_stmt_node(BREAK_STMT);
+    if (t != NULL) {
+        match(BREAK_TOKEN);
+    }
+    return t;
+}
+
+// continue statement
+TreeNode* continue_stmt(void) {
+    CHECK_SYNTAX_ERROR
+    TreeNode *t = new_stmt_node(CONTINUE_STMT);
+    if (t != NULL) {
+        match(CONTINUE_TOKEN);
+    }
+    return t;
+}
+
 // assign statement
 TreeNode* assign_stmt(void) {
     CHECK_SYNTAX_ERROR
@@ -154,25 +259,15 @@ TreeNode* assign_stmt(void) {
     return t;
 }
 
-// read statement
-TreeNode* read_stmt(void) {
+TreeNode* proc_call_stmt(void) {
     CHECK_SYNTAX_ERROR
-    TreeNode *t = new_stmt_node(READ_STMT);
-    match(READ_TOKEN);
-    if (t != NULL && current_token == ID_TOKEN) {
-        t->attr.name = copy_string(lexeme);
-    }
-    match(ID_TOKEN);
-    return t;
-}
-
-// write statement
-TreeNode* write_stmt(void) {
-    CHECK_SYNTAX_ERROR
-    TreeNode *t = new_stmt_node(WRITE_STMT);
-    match(WRITE_TOKEN);
+    TreeNode *t = new_stmt_node(PROC_CALL_STMT);
     if (t != NULL) {
-        t->child[0] = expr();
+        match(CALL_TOKEN);
+        if (current_token == ID_TOKEN) {
+            t->attr.name = copy_string(lexeme);
+        }
+        match(ID_TOKEN);
     }
     return t;
 }
@@ -240,17 +335,24 @@ TreeNode* factor(void) {
             break;
         case ID_TOKEN:
             t = new_expr_node(ID_EXPR);
-            if (t != NULL && current_token == ID_TOKEN) {
+            if (t != NULL) {
                 t->attr.name = copy_string(lexeme);
             }
             match(ID_TOKEN);
             break;
-        case NUMBER_TOKEN:
-            t = new_expr_node(CONST_EXPR);
-            if (t != NULL && current_token == NUMBER_TOKEN) {
-                t->attr.val = atoi(lexeme);
+        case INTEGER_TOKEN:
+            t = new_expr_node(INTEGER_EXPR);
+            if (t != NULL) {
+                t->attr.integer_val = atoi(lexeme);
             }
-            match(NUMBER_TOKEN);
+            match(INTEGER_TOKEN);
+            break;
+        case FLOAT_TOKEN:
+            t = new_expr_node(FLOAT_EXPR);
+            if (t != NULL) {
+                t->attr.float_val = atof(lexeme);
+            }
+            match(FLOAT_TOKEN);
             break;
         default:
             // syntax error
@@ -265,7 +367,7 @@ TreeNode* factor(void) {
 // parse and return a new syntax tree
 TreeNode* parse(void) {
     current_token = get_next_token();
-    TreeNode *t = stmts();
+    TreeNode *t = program();
     if (!SYNTAX_ERROR && current_token != ENDFILE_TOKEN) {
         // syntax error
         print_syntax_error("Code ends before file!\n");

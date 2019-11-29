@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     // create ast
     TreeNode *ast = parse();
     if (!SYNTAX_ERROR) {
-        fprintf(result_file, "\n[==== AST ====]\n");
+        fprintf(result_file, "\n[========== AST ==========]\n");
         print_tree(ast);
     }
 
