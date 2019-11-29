@@ -109,7 +109,6 @@ TreeNode* stmts(void) {
     TreeNode *p = NULL;
     while (!SYNTAX_ERROR && current_token != ENDFILE_TOKEN && current_token != END_TOKEN
            && current_token != ELSE_TOKEN && current_token != UNTIL_TOKEN) {
-        match(SEMI_TOKEN);
         TreeNode *q = stmt();
         if (q != NULL) {
             if (t == NULL) {
@@ -121,6 +120,7 @@ TreeNode* stmts(void) {
                 p = q;
             }
         }
+        match(SEMI_TOKEN);
     }
     return t;
 }

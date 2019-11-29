@@ -212,6 +212,7 @@ TokenType get_next_token(void) {
                     save_current_char = FALSE;
                     current_dfa_state = DONE;
                 }
+                break;
             // ============= [In Float] =============
             case IN_FLOAT:
                 if (!isdigit(current_char)) {
@@ -221,6 +222,7 @@ TokenType get_next_token(void) {
                     save_current_char = FALSE;
                     current_dfa_state = DONE;
                 }
+                break;
             // ============= [Done] =============
             case DONE:
                 break;
